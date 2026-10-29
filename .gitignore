@@ -1,0 +1,11 @@
+# Build output
+target/
+
+# IDE files
+.idea/
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+*.iml
