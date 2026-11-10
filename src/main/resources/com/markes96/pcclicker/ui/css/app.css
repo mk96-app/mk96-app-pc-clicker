@@ -1,0 +1,946 @@
+/*
+ * MK96 PC Clicker theme.
+ *
+ * Palette taken from the MK96 logo: the night-sky indigo background, the violet ring, the neon
+ * green hair, the blue sweater and the yellow stars. It re-maps the AtlantaFX Primer Dark tokens so
+ * every stock control (tooltips, scroll bars, switches...) follows the same identity.
+ */
+
+/* ------------------------------------------------------------------------------------------ */
+/* Tokens                                                                                     */
+/* ------------------------------------------------------------------------------------------ */
+
+.root {
+    -mk-night-950: #08040F;
+    -mk-night-900: #0C0719;
+    -mk-night-850: #110A22;
+    -mk-night-800: #160E2C;
+    -mk-night-750: #1C1237;
+    -mk-night-700: #241845;
+    -mk-line: #2B1F50;
+    -mk-line-strong: #3D2C70;
+
+    -mk-text: #F1ECFF;
+    -mk-text-muted: #ABA0CF;
+    -mk-text-subtle: #7C70A6;
+
+    -mk-violet: #A848F0;
+    -mk-violet-bright: #C88BFF;
+    -mk-violet-soft: rgba(168, 72, 240, 0.16);
+    -mk-violet-line: rgba(168, 72, 240, 0.50);
+    -mk-green: #8CFC02;
+    -mk-green-soft: rgba(140, 252, 2, 0.12);
+    -mk-green-line: rgba(140, 252, 2, 0.40);
+    -mk-blue: #4C86FF;
+    -mk-blue-bright: #8EB0FF;
+    -mk-blue-soft: rgba(76, 134, 255, 0.15);
+    -mk-blue-line: rgba(76, 134, 255, 0.55);
+    -mk-yellow: #FEE532;
+    -mk-yellow-soft: rgba(254, 229, 50, 0.12);
+    -mk-yellow-line: rgba(254, 229, 50, 0.45);
+    -mk-red: #FF5C7A;
+    -mk-red-soft: rgba(255, 92, 122, 0.14);
+    -mk-red-line: rgba(255, 92, 122, 0.45);
+
+    /* AtlantaFX tokens re-mapped to the MK96 palette */
+    -color-bg-default: -mk-night-850;
+    -color-bg-overlay: -mk-night-750;
+    -color-bg-subtle: -mk-night-800;
+    -color-bg-inset: -mk-night-900;
+    -color-fg-default: -mk-text;
+    -color-fg-muted: -mk-text-muted;
+    -color-fg-subtle: -mk-text-subtle;
+    -color-fg-emphasis: #FFFFFF;
+    -color-border-default: -mk-line-strong;
+    -color-border-muted: -mk-line;
+    -color-border-subtle: -mk-line;
+    -color-accent-fg: -mk-violet-bright;
+    -color-accent-emphasis: -mk-violet;
+    -color-accent-muted: -mk-violet-line;
+    -color-accent-subtle: -mk-violet-soft;
+    -color-success-fg: -mk-green;
+    -color-success-emphasis: #5FBF00;
+    -color-success-muted: -mk-green-line;
+    -color-success-subtle: -mk-green-soft;
+    -color-warning-fg: -mk-yellow;
+    -color-warning-emphasis: #D9BE00;
+    -color-warning-muted: -mk-yellow-line;
+    -color-warning-subtle: -mk-yellow-soft;
+    -color-danger-fg: -mk-red;
+    -color-danger-emphasis: #E3365C;
+    -color-danger-muted: -mk-red-line;
+    -color-danger-subtle: -mk-red-soft;
+    -color-neutral-muted: rgba(171, 160, 207, 0.30);
+    -color-neutral-subtle: rgba(171, 160, 207, 0.10);
+
+    /* Default card accent, overridden per card below */
+    -card-accent: -mk-violet;
+    -card-accent-bright: -mk-violet-bright;
+    -card-accent-soft: -mk-violet-soft;
+    -card-accent-line: -mk-violet-line;
+
+    -fx-font-family: "Inter";
+    -fx-font-size: 13px;
+}
+
+.accent-violet {
+    -card-accent: -mk-violet;
+    -card-accent-bright: -mk-violet-bright;
+    -card-accent-soft: -mk-violet-soft;
+    -card-accent-line: -mk-violet-line;
+}
+
+.accent-blue {
+    -card-accent: -mk-blue;
+    -card-accent-bright: -mk-blue-bright;
+    -card-accent-soft: -mk-blue-soft;
+    -card-accent-line: -mk-blue-line;
+}
+
+.accent-yellow {
+    -card-accent: -mk-yellow;
+    -card-accent-bright: -mk-yellow;
+    -card-accent-soft: -mk-yellow-soft;
+    -card-accent-line: -mk-yellow-line;
+}
+
+.accent-green {
+    -card-accent: -mk-green;
+    -card-accent-bright: -mk-green;
+    -card-accent-soft: -mk-green-soft;
+    -card-accent-line: -mk-green-line;
+}
+
+.icon {
+    -fx-icon-color: -mk-text-muted;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Window chrome                                                                              */
+/* ------------------------------------------------------------------------------------------ */
+
+.window-frame {
+    -fx-background-color: transparent;
+}
+
+.window-shadow {
+    -fx-background-color: -mk-night-850;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 22, 0.15, 0, 6);
+}
+
+.window {
+    -fx-background-color: -mk-night-850;
+    -fx-background-radius: 16;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+}
+
+.title-bar {
+    -fx-background-color: -mk-night-900;
+    -fx-border-color: transparent transparent -mk-line transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8 8 8 16;
+    -fx-spacing: 10;
+    -fx-min-height: 44;
+}
+
+.title-text {
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 600;
+}
+
+.version-chip {
+    -fx-text-fill: -mk-violet-bright;
+    -fx-background-color: -mk-violet-soft;
+    -fx-background-radius: 999;
+    -fx-padding: 1 8;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 11px;
+}
+
+.window-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-padding: 6 10;
+    -fx-cursor: hand;
+}
+
+.window-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+}
+
+.window-button:hover .icon {
+    -fx-icon-color: -mk-text;
+}
+
+.window-close:hover {
+    -fx-background-color: -mk-red;
+}
+
+.window-close:hover .icon {
+    -fx-icon-color: white;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Navigation rail                                                                            */
+/* ------------------------------------------------------------------------------------------ */
+
+.nav-rail {
+    -fx-background-color: -mk-night-900;
+    -fx-border-color: transparent -mk-line transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 14 8 14 8;
+    -fx-spacing: 6;
+    -fx-pref-width: 88;
+}
+
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 12;
+    -fx-border-color: transparent;
+    -fx-text-fill: -mk-text-subtle;
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-graphic-text-gap: 6;
+    -fx-padding: 10 4 9 4;
+    -fx-pref-width: 72;
+    -fx-cursor: hand;
+}
+
+.nav-item .icon {
+    -fx-icon-color: -mk-text-subtle;
+}
+
+.nav-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: -mk-text-muted;
+}
+
+.nav-item:hover .icon {
+    -fx-icon-color: -mk-text-muted;
+}
+
+.nav-item:selected {
+    -fx-background-color: -mk-violet-soft;
+    -fx-text-fill: -mk-text;
+}
+
+.nav-item:selected .icon {
+    -fx-icon-color: -mk-violet-bright;
+}
+
+.nav-exit:hover {
+    -fx-background-color: -mk-red-soft;
+    -fx-text-fill: -mk-red;
+}
+
+.nav-exit:hover .icon {
+    -fx-icon-color: -mk-red;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Pages                                                                                      */
+/* ------------------------------------------------------------------------------------------ */
+
+.page-host {
+    -fx-background-color: -mk-night-850;
+}
+
+.page-scroll,
+.page-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.page-column {
+    -fx-padding: 28 32 32 32;
+}
+
+.page-header {
+    -fx-padding: 0 0 6 0;
+}
+
+.page-eyebrow {
+    -fx-text-fill: -mk-violet-bright;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.page-title {
+    -fx-text-fill: -mk-text;
+    -fx-font-size: 26px;
+    -fx-font-weight: 700;
+}
+
+.page-subtitle {
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 14px;
+}
+
+.section-title,
+.panel-title {
+    -fx-text-fill: -mk-text;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+}
+
+.mono-value {
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-weight: 700;
+    -fx-text-fill: -mk-violet-bright;
+}
+
+.banner-warning {
+    -fx-background-color: -mk-yellow-soft;
+    -fx-background-radius: 12;
+    -fx-border-color: -mk-yellow-line;
+    -fx-border-radius: 12;
+    -fx-padding: 10 14;
+}
+
+.banner-warning .icon {
+    -fx-icon-color: -mk-yellow;
+}
+
+.banner-text {
+    -fx-text-fill: -mk-text;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Feature cards                                                                              */
+/* ------------------------------------------------------------------------------------------ */
+
+.feature-card {
+    -fx-background-color: -mk-night-800;
+    -fx-background-radius: 16;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 16;
+    -fx-padding: 18 20;
+    -fx-spacing: 16;
+}
+
+.feature-card:hover {
+    -fx-border-color: -mk-line-strong;
+}
+
+.feature-card:on {
+    -fx-border-color: -card-accent-line;
+    -fx-background-color: linear-gradient(to bottom, derive(-mk-night-800, 6%), -mk-night-800 60%);
+}
+
+.feature-badge {
+    -fx-background-color: -card-accent-soft;
+    -fx-background-radius: 12;
+    -fx-min-width: 42;
+    -fx-min-height: 42;
+    -fx-max-width: 42;
+    -fx-max-height: 42;
+}
+
+.feature-badge .icon {
+    -fx-icon-color: -card-accent-bright;
+}
+
+.feature-title {
+    -fx-text-fill: -mk-text;
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+}
+
+.feature-description {
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12.5px;
+}
+
+.feature-body {
+    -fx-border-color: -mk-line transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 16 0 0 0;
+}
+
+.feature-card .toggle-switch:selected .thumb-area {
+    -fx-background-color: -card-accent;
+}
+
+.field-name {
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 600;
+}
+
+.field-hint {
+    -fx-text-fill: -mk-text-subtle;
+    -fx-font-size: 11.5px;
+}
+
+/* Number stepper */
+
+.stepper {
+    -fx-background-color: -mk-night-900;
+    -fx-background-radius: 11;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 11;
+    -fx-padding: 3;
+    -fx-spacing: 2;
+}
+
+.stepper:focus-within {
+    -fx-border-color: -card-accent-line;
+}
+
+.stepper-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.stepper-button:hover {
+    -fx-background-color: -card-accent-soft;
+}
+
+.stepper-button:hover .icon {
+    -fx-icon-color: -card-accent-bright;
+}
+
+.stepper-button:armed {
+    -fx-background-color: -card-accent-line;
+}
+
+.stepper-button:disabled {
+    -fx-opacity: 0.3;
+}
+
+.stepper-field,
+.stepper-field:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+    -fx-text-fill: -mk-text;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+    -fx-padding: 0 4;
+    -fx-highlight-fill: -mk-violet-line;
+}
+
+.stepper-unit {
+    -fx-text-fill: -mk-text-subtle;
+    -fx-font-size: 12px;
+    -fx-padding: 0 10 0 2;
+}
+
+/* Preset chips */
+
+.chip {
+    -fx-background-color: transparent;
+    -fx-background-radius: 999;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 999;
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 4 12;
+    -fx-cursor: hand;
+}
+
+.chip:hover {
+    -fx-border-color: -mk-line-strong;
+    -fx-text-fill: -mk-text;
+}
+
+.chip:selected {
+    -fx-background-color: -card-accent-soft;
+    -fx-border-color: -card-accent-line;
+    -fx-text-fill: -card-accent-bright;
+}
+
+/* Pattern picker */
+
+.pattern-tile {
+    -fx-background-color: -mk-night-900;
+    -fx-background-radius: 12;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 12;
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-graphic-text-gap: 8;
+    -fx-padding: 10 6 9 6;
+    -fx-cursor: hand;
+}
+
+.pattern-tile:hover {
+    -fx-border-color: -mk-line-strong;
+    -fx-text-fill: -mk-text;
+}
+
+.pattern-tile:selected {
+    -fx-background-color: -card-accent-soft;
+    -fx-border-color: -card-accent;
+    -fx-text-fill: -mk-text;
+}
+
+.pattern-description {
+    -fx-font-size: 12px;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Summary panel                                                                              */
+/* ------------------------------------------------------------------------------------------ */
+
+.summary-panel {
+    -fx-background-color: -mk-night-800;
+    -fx-border-color: transparent transparent transparent -mk-line;
+    -fx-border-width: 0 0 0 1;
+    -fx-padding: 28 24 24 24;
+    -fx-pref-width: 356;
+    -fx-min-width: 356;
+    -fx-max-width: 356;
+}
+
+.session-preview {
+    -fx-background-color: radial-gradient(center 50% 40%, radius 75%, #1A1040, -mk-night-900);
+    -fx-background-radius: 14;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 14;
+    -fx-min-height: 190;
+    -fx-pref-height: 220;
+}
+
+.preview-empty {
+    -fx-text-fill: -mk-text-subtle;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+    -fx-padding: 24;
+}
+
+.summary-list {
+    -fx-padding: 2 0;
+}
+
+.summary-row {
+    -fx-padding: 0 0 10 0;
+    -fx-border-color: transparent transparent -mk-line transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.summary-icon {
+    -fx-background-color: -card-accent-soft;
+    -fx-background-radius: 8;
+    -fx-alignment: center;
+    -fx-min-width: 28;
+    -fx-min-height: 28;
+    -fx-max-width: 28;
+    -fx-max-height: 28;
+}
+
+.summary-icon .icon {
+    -fx-icon-color: -card-accent-bright;
+}
+
+.summary-name {
+    -fx-text-fill: -mk-text-muted;
+}
+
+.summary-value {
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 600;
+}
+
+.hotkey-hints {
+    -fx-padding: 2 0;
+}
+
+.key-cap {
+    -fx-background-color: linear-gradient(to bottom, -mk-night-700, -mk-night-750);
+    -fx-background-radius: 6;
+    -fx-border-color: -mk-line-strong;
+    -fx-border-width: 1 1 2 1;
+    -fx-border-radius: 6;
+    -fx-text-fill: -mk-text;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-padding: 2 7;
+    -fx-alignment: center;
+    -fx-min-width: 26;
+}
+
+.key-caption {
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12px;
+}
+
+.start-button {
+    -fx-background-color: linear-gradient(to right, #B055F5, #7B4DFF);
+    -fx-background-radius: 14;
+    -fx-border-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-padding: 14 20;
+    -fx-graphic-text-gap: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(168, 72, 240, 0.55), 22, 0.1, 0, 6);
+}
+
+.start-button .icon {
+    -fx-icon-color: white;
+}
+
+.start-button:hover {
+    -fx-background-color: linear-gradient(to right, #BE6EFF, #8C63FF);
+    -fx-effect: dropshadow(gaussian, rgba(168, 72, 240, 0.75), 28, 0.15, 0, 6);
+}
+
+.start-button:armed {
+    -fx-background-color: linear-gradient(to right, #9A3FE0, #6A40EE);
+}
+
+.start-button:focused {
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+    -fx-border-radius: 14;
+}
+
+.start-button:disabled {
+    -fx-opacity: 1;
+    -fx-background-color: -mk-night-700;
+    -fx-text-fill: -mk-text-subtle;
+    -fx-effect: null;
+}
+
+.start-button:disabled .icon {
+    -fx-icon-color: -mk-text-subtle;
+}
+
+.start-hint {
+    -fx-text-fill: -mk-text-subtle;
+    -fx-font-size: 12px;
+    -fx-text-alignment: center;
+    -fx-alignment: center;
+    -fx-max-width: infinity;
+}
+
+.secondary-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-border-color: -mk-line-strong;
+    -fx-border-radius: 10;
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 600;
+    -fx-padding: 8 16;
+    -fx-graphic-text-gap: 8;
+    -fx-cursor: hand;
+}
+
+.secondary-button .icon {
+    -fx-icon-color: -mk-text;
+}
+
+.secondary-button:hover {
+    -fx-background-color: -mk-violet-soft;
+    -fx-border-color: -mk-violet-line;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Toasts                                                                                     */
+/* ------------------------------------------------------------------------------------------ */
+
+.toast-layer {
+    -fx-padding: 0 0 24 0;
+}
+
+.toast {
+    -fx-background-color: -mk-night-700;
+    -fx-background-radius: 14;
+    -fx-border-color: -mk-line-strong;
+    -fx-border-radius: 14;
+    -fx-padding: 12 20 12 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 24, 0.1, 0, 8);
+}
+
+.toast-title {
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 700;
+}
+
+.toast-detail {
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12px;
+}
+
+.toast-success {
+    -fx-border-color: -mk-green-line;
+}
+
+.toast-success .icon {
+    -fx-icon-color: -mk-green;
+}
+
+.toast-info .icon {
+    -fx-icon-color: -mk-violet-bright;
+}
+
+.toast-danger {
+    -fx-border-color: -mk-red-line;
+}
+
+.toast-danger .icon {
+    -fx-icon-color: -mk-red;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Help and About                                                                             */
+/* ------------------------------------------------------------------------------------------ */
+
+.help-section {
+    -fx-background-color: -mk-night-800;
+    -fx-background-radius: 16;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 16;
+    -fx-padding: 20;
+}
+
+.step-card,
+.pattern-help {
+    -fx-background-color: -mk-night-900;
+    -fx-background-radius: 12;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 12;
+    -fx-padding: 14 16;
+}
+
+.step-number {
+    -fx-background-color: linear-gradient(to bottom right, #B055F5, #7B4DFF);
+    -fx-background-radius: 999;
+    -fx-text-fill: white;
+    -fx-font-weight: 700;
+    -fx-alignment: center;
+    -fx-min-width: 26;
+    -fx-min-height: 26;
+}
+
+.step-title {
+    -fx-text-fill: -mk-text;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.step-text,
+.help-note {
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12.5px;
+}
+
+.help-note {
+    -fx-text-fill: -mk-text-subtle;
+}
+
+.help-row-text {
+    -fx-text-fill: -mk-text;
+}
+
+.limit-row {
+    -fx-padding: 4 0 8 0;
+    -fx-border-color: transparent transparent -mk-line transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.about-hero {
+    -fx-padding: 8 0 8 0;
+}
+
+.about-logo {
+    -fx-effect: dropshadow(gaussian, rgba(168, 72, 240, 0.6), 40, 0.2, 0, 0);
+}
+
+.fact-name {
+    -fx-text-fill: -mk-text-subtle;
+}
+
+.fact-value {
+    -fx-text-fill: -mk-text;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-weight: 500;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* Session HUD                                                                                */
+/* ------------------------------------------------------------------------------------------ */
+
+.hud-frame {
+    -fx-background-color: transparent;
+    -fx-padding: 14;
+}
+
+.hud {
+    -fx-background-color: rgba(17, 10, 34, 0.95);
+    -fx-background-radius: 18;
+    -fx-border-color: -mk-violet-line;
+    -fx-border-radius: 18;
+    -fx-padding: 14 18 16 18;
+    -fx-pref-width: 300;
+    -fx-max-width: 300;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 24, 0.15, 0, 6);
+}
+
+.hud-view {
+    -fx-spacing: 10;
+}
+
+.hud-header {
+    -fx-padding: 0 0 2 0;
+}
+
+.hud-title {
+    -fx-text-fill: -mk-text;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+}
+
+.hud-caption {
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12px;
+}
+
+.hud-dial {
+    -fx-padding: 4 0 6 0;
+}
+
+.hud-ring-track {
+    -fx-fill: transparent;
+    -fx-stroke: -mk-line;
+    -fx-stroke-width: 6;
+}
+
+.hud-ring {
+    -fx-fill: transparent;
+    /* Absolute coordinates (ring centred at 0,0, radius 46): the gradient stays fixed while the arc drains. */
+    -fx-stroke: linear-gradient(from 0px -49px to 0px 49px, #C88BFF, #8CFC02);
+    -fx-stroke-width: 6;
+    -fx-stroke-line-cap: round;
+}
+
+.hud-countdown-number {
+    -fx-text-fill: white;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 44px;
+    -fx-font-weight: 700;
+}
+
+.hud-status {
+    -fx-text-fill: -mk-green;
+    -fx-background-color: -mk-green-soft;
+    -fx-background-radius: 999;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-padding: 3 10 3 8;
+    -fx-graphic-text-gap: 7;
+}
+
+.hud-status-dot {
+    -fx-background-color: -mk-green;
+    -fx-background-radius: 999;
+    -fx-min-width: 8;
+    -fx-min-height: 8;
+    -fx-max-width: 8;
+    -fx-max-height: 8;
+    -fx-effect: dropshadow(gaussian, -mk-green, 6, 0.4, 0, 0);
+}
+
+.hud-status:paused {
+    -fx-text-fill: -mk-yellow;
+    -fx-background-color: -mk-yellow-soft;
+}
+
+.hud-status:paused .hud-status-dot {
+    -fx-background-color: -mk-yellow;
+    -fx-effect: null;
+}
+
+.hud-stop {
+    -fx-background-color: -mk-red-soft;
+    -fx-background-radius: 8;
+    -fx-border-color: -mk-red-line;
+    -fx-border-radius: 8;
+    -fx-text-fill: -mk-red;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 3 10 3 8;
+    -fx-graphic-text-gap: 4;
+    -fx-cursor: hand;
+}
+
+.hud-stop .icon {
+    -fx-icon-color: -mk-red;
+}
+
+.hud-stop:hover {
+    -fx-background-color: -mk-red;
+    -fx-text-fill: white;
+}
+
+.hud-stop:hover .icon {
+    -fx-icon-color: white;
+}
+
+.hud-timer {
+    -fx-text-fill: white;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 38px;
+    -fx-font-weight: 700;
+}
+
+.hud-timer:paused {
+    -fx-text-fill: -mk-text-subtle;
+}
+
+.hud-progress {
+    -fx-min-height: 8;
+    -fx-pref-height: 8;
+    -fx-max-height: 8;
+}
+
+.hud-progress > .track {
+    -fx-background-color: -mk-night-700;
+    -fx-background-radius: 999;
+}
+
+.hud-progress > .bar {
+    -fx-background-color: linear-gradient(to right, #A848F0, #8CFC02);
+    -fx-background-radius: 999;
+    -fx-background-insets: 0;
+    -fx-padding: 4px;
+}
+
+.hud-clicks {
+    -fx-text-fill: white;
+    -fx-font-family: "JetBrains Mono";
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+}
+
+.hud-config {
+    -fx-text-fill: -mk-text-subtle;
+}
+
+.hud-divider {
+    -fx-background-color: -mk-line;
+    -fx-min-height: 1;
+    -fx-max-height: 1;
+}
+
+.hud-go {
+    -fx-text-fill: -mk-green;
+    -fx-font-size: 52px;
+    -fx-font-weight: 700;
+    -fx-effect: dropshadow(gaussian, rgba(140, 252, 2, 0.7), 24, 0.3, 0, 0);
+}
