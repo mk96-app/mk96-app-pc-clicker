@@ -1,10 +1,14 @@
 package com.markes96.pcclicker.application.port.in;
 
-import com.markes96.pcclicker.domain.control.Hotkey;
+import com.markes96.pcclicker.domain.control.Key;
 
-/** Reacts to a global hotkey. Hotkeys only have an effect while a session is active. */
+/**
+ * Reacts to a key released anywhere in the system. The key is looked up in the current
+ * preferences, so rebinding a hotkey takes effect at once. The start hotkey only works while no
+ * session is active; the others only while one is.
+ */
 @FunctionalInterface
 public interface HandleHotkeyUseCase {
 
-    void handle(Hotkey hotkey);
+    void keyReleased(Key key);
 }

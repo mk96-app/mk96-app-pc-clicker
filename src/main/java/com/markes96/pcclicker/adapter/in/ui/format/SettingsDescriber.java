@@ -2,9 +2,13 @@ package com.markes96.pcclicker.adapter.in.ui.format;
 
 import com.markes96.pcclicker.adapter.in.ui.i18n.Messages;
 import com.markes96.pcclicker.domain.configuration.ClickSettings;
+import com.markes96.pcclicker.domain.configuration.ClickType;
+import com.markes96.pcclicker.domain.configuration.MouseButton;
 import com.markes96.pcclicker.domain.configuration.MovementPattern;
 import com.markes96.pcclicker.domain.configuration.MovementSettings;
 import com.markes96.pcclicker.domain.configuration.TimeLimit;
+import com.markes96.pcclicker.domain.control.Hotkey;
+import com.markes96.pcclicker.domain.settings.Preset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,11 +28,41 @@ public final class SettingsDescriber {
         this.messages = Objects.requireNonNull(messages, "messages");
     }
 
+    /** Rate first, then only the options that differ from a plain steady left click. */
     public String click(ClickSettings settings) {
         if (!settings.enabled()) {
             return messages.get("summary.off");
         }
-        return messages.format("summary.clickRate", settings.rate().clicksPerSecond());
+        final List<String> parts = new ArrayList<>(5);
+        parts.add(messages.format("summary.clickRate", settings.rate().clicksPerSecond()));
+        if (settings.button() != MouseButton.LEFT) {
+            parts.add(messages.get("summary.button." + settings.button().name()));
+        }
+        if (settings.type() == ClickType.DOUBLE) {
+            parts.add(messages.get("summary.doubleClick"));
+        }
+        if (!settings.variation().isNone()) {
+            parts.add(messages.format("summary.variation", settings.variation().percent()));
+        }
+        settings.limit().clicks().ifPresent(limit ->
+                parts.add(messages.format("summary.clickLimit", messages.number(limit))));
+        return join(parts);
+    }
+
+    public String buttonName(MouseButton button) {
+        return messages.get("button." + button.name());
+    }
+
+    public String clickTypeName(ClickType type) {
+        return messages.get("clickType." + type.name());
+    }
+
+    public String presetName(Preset preset) {
+        return messages.get("preset." + preset.name());
+    }
+
+    public String hotkeyName(Hotkey hotkey) {
+        return messages.get("hotkey." + hotkey.name());
     }
 
     public String movement(MovementSettings settings) {

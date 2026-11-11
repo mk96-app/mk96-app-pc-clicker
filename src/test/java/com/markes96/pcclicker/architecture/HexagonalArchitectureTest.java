@@ -24,13 +24,14 @@ class HexagonalArchitectureTest {
     @ArchTest
     static final ArchRule layers_follow_the_hexagonal_architecture = onionArchitecture()
             .domainModels(ROOT + ".domain.configuration..", ROOT + ".domain.geometry..",
-                    ROOT + ".domain.session..", ROOT + ".domain.control..")
-            .domainServices(ROOT + ".domain.movement..")
+                    ROOT + ".domain.session..", ROOT + ".domain.control..", ROOT + ".domain.settings..")
+            .domainServices(ROOT + ".domain.movement..", ROOT + ".domain.timing..")
             .applicationServices(ROOT + ".application..")
             .adapter("ui", ROOT + ".adapter.in.ui..")
             .adapter("hotkeys", ROOT + ".adapter.in.hotkey..")
             .adapter("system", ROOT + ".adapter.out.system..")
             .adapter("scheduling", ROOT + ".adapter.out.scheduling..")
+            .adapter("persistence", ROOT + ".adapter.out.persistence..")
             // The composition root wires everything together by definition.
             .ignoreDependency(resideInAPackage(ROOT + ".bootstrap.."), alwaysTrue());
 

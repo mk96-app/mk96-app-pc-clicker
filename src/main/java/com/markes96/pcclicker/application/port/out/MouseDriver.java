@@ -1,5 +1,7 @@
 package com.markes96.pcclicker.application.port.out;
 
+import com.markes96.pcclicker.domain.configuration.ClickType;
+import com.markes96.pcclicker.domain.configuration.MouseButton;
 import com.markes96.pcclicker.domain.geometry.ScreenPoint;
 
 /**
@@ -12,6 +14,6 @@ public interface MouseDriver {
 
     void moveTo(ScreenPoint point);
 
-    /** Presses and releases the primary button where the pointer is. */
-    void click();
+    /** Clicks {@code button} where the pointer is: once, or twice in a row for a double click. */
+    void click(MouseButton button, ClickType type);
 }

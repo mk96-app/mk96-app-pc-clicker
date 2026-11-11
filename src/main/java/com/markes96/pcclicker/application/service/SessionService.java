@@ -16,6 +16,7 @@ import com.markes96.pcclicker.application.port.out.event.SessionPaused;
 import com.markes96.pcclicker.application.port.out.event.SessionProgressed;
 import com.markes96.pcclicker.application.port.out.event.SessionResumed;
 import com.markes96.pcclicker.application.port.out.event.SessionStarted;
+import com.markes96.pcclicker.domain.configuration.ClickSettings;
 import com.markes96.pcclicker.domain.configuration.SessionConfiguration;
 import com.markes96.pcclicker.domain.geometry.ScreenPoint;
 import com.markes96.pcclicker.domain.movement.MovementPath;
@@ -23,6 +24,8 @@ import com.markes96.pcclicker.domain.movement.MovementPathFactory;
 import com.markes96.pcclicker.domain.session.FinishReason;
 import com.markes96.pcclicker.domain.session.Session;
 import com.markes96.pcclicker.domain.session.SessionStatus;
+import com.markes96.pcclicker.domain.settings.CountdownSeconds;
+import com.markes96.pcclicker.domain.timing.ClickCadence;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.time.Duration;
@@ -31,10 +34,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
+import java.util.random.RandomGenerator;
 
 /**
  * Orchestrates the life of a {@link Session}: countdown, periodic clicks and moves, pause, time
- * limit and termination.
+ * and click limits, and termination.
  *
  * <p>Threading: commands arrive from the UI thread, the hotkey thread and the scheduler threads.
  * Every access to the session goes through a single lock, and events are published while holding
@@ -52,20 +57,29 @@ public final class SessionService implements StartSessionUseCase, StopSessionUse
     private final InstantSource clock;
     private final SessionEventPublisher events;
     private final MovementPathFactory paths;
+    private final RandomGenerator random;
     private final SessionTimings timings;
+    private final Supplier<CountdownSeconds> countdown;
 
     private final ReentrantLock lock = new ReentrantLock();
     private ActiveRun run;
 
+    /**
+     * @param random    source of the irregular pace of clicks with variation
+     * @param countdown read at every start, so a change of preference applies to the next session
+     */
     public SessionService(MouseDriver mouse, ScreenGeometry screens, TaskScheduler scheduler, InstantSource clock,
-                          SessionEventPublisher events, MovementPathFactory paths, SessionTimings timings) {
+                          SessionEventPublisher events, MovementPathFactory paths, RandomGenerator random,
+                          SessionTimings timings, Supplier<CountdownSeconds> countdown) {
         this.mouse = Objects.requireNonNull(mouse, "mouse");
         this.screens = Objects.requireNonNull(screens, "screens");
         this.scheduler = Objects.requireNonNull(scheduler, "scheduler");
         this.clock = Objects.requireNonNull(clock, "clock");
         this.events = Objects.requireNonNull(events, "events");
         this.paths = Objects.requireNonNull(paths, "paths");
+        this.random = Objects.requireNonNull(random, "random");
         this.timings = Objects.requireNonNull(timings, "timings");
+        this.countdown = Objects.requireNonNull(countdown, "countdown");
     }
 
     @Override
@@ -76,8 +90,13 @@ public final class SessionService implements StartSessionUseCase, StopSessionUse
             if (run != null) {
                 throw new SessionAlreadyActiveException();
             }
-            final ActiveRun newRun = new ActiveRun(Session.prepare(configuration), timings.countdownSeconds());
+            final CountdownSeconds seconds = Objects.requireNonNull(countdown.get(), "countdown seconds");
+            final ActiveRun newRun = new ActiveRun(Session.prepare(configuration), seconds.value());
             run = newRun;
+            if (seconds.isImmediate()) {
+                boundTo(newRun, this::beginRunning).run();
+                return;
+            }
             events.publish(new CountdownTicked(newRun.countdownLeft));
             newRun.track(scheduler.scheduleAtFixedRate(
                     boundTo(newRun, this::countdownTick), timings.countdownStep(), timings.countdownStep()));
@@ -153,8 +172,13 @@ public final class SessionService implements StartSessionUseCase, StopSessionUse
                     boundTo(current, () -> move(path)), Duration.ZERO, timings.movementInterval()));
         }
         if (configuration.clicks()) {
-            current.track(scheduler.scheduleAtFixedRate(
-                    boundTo(current, this::click), Duration.ZERO, configuration.click().rate().interval()));
+            final ClickSettings click = configuration.click();
+            final ClickCadence cadence = new ClickCadence(click.rate(), click.variation(), random);
+            if (cadence.isSteady()) {
+                current.track(scheduler.scheduleAtFixedRate(boundTo(current, this::click), Duration.ZERO, cadence.interval()));
+            } else {
+                scheduleNextClick(current, cadence, Duration.ZERO);
+            }
         }
         current.track(scheduler.scheduleAtFixedRate(
                 boundTo(current, this::reportProgress), timings.progressInterval(), timings.progressInterval()));
@@ -169,10 +193,29 @@ public final class SessionService implements StartSessionUseCase, StopSessionUse
     }
 
     private void click() {
-        if (run.session.isRunning()) {
-            mouse.click();
-            run.session.recordClick();
+        final Session session = run.session;
+        if (!session.isRunning()) {
+            return;
         }
+        final ClickSettings settings = session.configuration().click();
+        mouse.click(settings.button(), settings.type());
+        session.recordClick();
+        if (session.hasReachedClickLimit()) {
+            finish(FinishReason.CLICK_LIMIT_REACHED);
+        }
+    }
+
+    /**
+     * Irregular pace: every click schedules the next one after a fresh wait. Only one click task
+     * exists at a time, so a long session does not pile up handles.
+     */
+    private void scheduleNextClick(ActiveRun owner, ClickCadence cadence, Duration delay) {
+        owner.replaceClickTask(scheduler.schedule(boundTo(owner, () -> {
+            click();
+            if (run == owner) {
+                scheduleNextClick(owner, cadence, cadence.next());
+            }
+        }), delay));
     }
 
     private void reportProgress() {
@@ -222,6 +265,7 @@ public final class SessionService implements StartSessionUseCase, StopSessionUse
     private static final class ActiveRun {
         private final Session session;
         private final List<ScheduledTask> tasks = new ArrayList<>();
+        private ScheduledTask clickTask;
         private int countdownLeft;
 
         private ActiveRun(Session session, int countdownLeft) {
@@ -233,9 +277,17 @@ public final class SessionService implements StartSessionUseCase, StopSessionUse
             tasks.add(task);
         }
 
+        private void replaceClickTask(ScheduledTask task) {
+            clickTask = task;
+        }
+
         private void cancelTasks() {
             tasks.forEach(ScheduledTask::cancel);
             tasks.clear();
+            if (clickTask != null) {
+                clickTask.cancel();
+                clickTask = null;
+            }
         }
     }
 }

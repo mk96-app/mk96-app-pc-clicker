@@ -492,6 +492,219 @@
     -fx-font-size: 12px;
 }
 
+/* Segmented picker (button, click type) */
+
+.segmented {
+    -fx-background-color: -mk-night-900;
+    -fx-background-radius: 11;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 11;
+    -fx-padding: 3;
+    -fx-spacing: 2;
+}
+
+.segment {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-text-fill: -mk-text-muted;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+}
+
+.segment:hover {
+    -fx-background-color: -mk-night-750;
+    -fx-text-fill: -mk-text;
+}
+
+.segment:selected {
+    -fx-background-color: -card-accent-soft;
+    -fx-text-fill: -card-accent-bright;
+}
+
+.card-divider {
+    -fx-background-color: -mk-line;
+    -fx-min-height: 1;
+    -fx-max-height: 1;
+    -fx-pref-height: 1;
+}
+
+.feature-body .toggle-switch:selected .thumb-area {
+    -fx-background-color: -card-accent;
+}
+
+/* Profiles */
+
+.profile-bar {
+    -fx-background-color: -mk-night-800;
+    -fx-background-radius: 14;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 14;
+    -fx-padding: 10 12 10 16;
+}
+
+.profile-bar > * > .icon,
+.profile-save .icon {
+    -fx-icon-color: -mk-violet-bright;
+}
+
+.profile-label {
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 600;
+}
+
+.profile-picker {
+    -fx-background-color: -mk-night-900;
+    -fx-background-radius: 10;
+    -fx-border-color: -mk-line;
+    -fx-border-radius: 10;
+    -fx-pref-height: 34;
+}
+
+.profile-picker:focused,
+.profile-picker:showing {
+    -fx-border-color: -mk-violet-line;
+}
+
+.profile-picker .list-cell {
+    -fx-text-fill: -mk-text;
+    -fx-background-color: transparent;
+}
+
+.profile-picker .combo-box-popup .list-view {
+    -fx-background-color: -mk-night-750;
+    -fx-border-color: -mk-line-strong;
+}
+
+.profile-picker .combo-box-popup .list-cell:hover,
+.profile-picker .combo-box-popup .list-cell:selected {
+    -fx-background-color: -mk-violet-soft;
+}
+
+.profile-picker .list-cell:prompt {
+    -fx-text-fill: -mk-text-subtle;
+}
+
+.profile-picker:disabled {
+    -fx-opacity: 0.6;
+}
+
+.profile-star:favorite .icon,
+.favorite-star {
+    -fx-icon-color: -mk-yellow;
+}
+
+.profile-star:favorite {
+    -fx-border-color: -mk-yellow-line;
+}
+
+.profile-star:favorite:hover {
+    -fx-background-color: -mk-yellow-soft;
+}
+
+.profile-modified {
+    -fx-text-fill: -mk-yellow;
+    -fx-font-size: 11.5px;
+    -fx-font-weight: 600;
+}
+
+.profile-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-border-color: -mk-line-strong;
+    -fx-border-radius: 10;
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 600;
+    -fx-padding: 7 12;
+    -fx-graphic-text-gap: 6;
+    -fx-cursor: hand;
+}
+
+.profile-button .icon {
+    -fx-icon-color: -mk-text;
+}
+
+.profile-button:hover {
+    -fx-background-color: -mk-violet-soft;
+    -fx-border-color: -mk-violet-line;
+}
+
+.profile-button:danger {
+    -fx-background-color: -mk-red-soft;
+    -fx-border-color: -mk-red-line;
+    -fx-text-fill: -mk-red;
+}
+
+.profile-button:danger .icon {
+    -fx-icon-color: -mk-red;
+}
+
+.profile-button:disabled {
+    -fx-opacity: 0.45;
+}
+
+.profile-confirm {
+    -fx-background-color: -mk-violet;
+    -fx-border-color: -mk-violet;
+    -fx-text-fill: white;
+}
+
+.profile-confirm .icon {
+    -fx-icon-color: white;
+}
+
+.profile-confirm:hover {
+    -fx-background-color: -mk-violet-bright;
+    -fx-border-color: -mk-violet-bright;
+}
+
+.profile-name-field {
+    -fx-background-color: -mk-night-900;
+    -fx-background-radius: 10;
+    -fx-border-color: -mk-violet-line;
+    -fx-border-radius: 10;
+    -fx-text-fill: -mk-text;
+    -fx-prompt-text-fill: -mk-text-subtle;
+    -fx-highlight-fill: -mk-violet-line;
+    -fx-pref-height: 34;
+}
+
+/* Settings */
+
+.settings-card {
+    -fx-border-color: -mk-line;
+}
+
+.key-change {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-border-color: -mk-line-strong;
+    -fx-border-radius: 10;
+    -fx-text-fill: -mk-text;
+    -fx-font-weight: 600;
+    -fx-padding: 6 12;
+    -fx-min-width: 128;
+    -fx-cursor: hand;
+}
+
+.key-change:hover {
+    -fx-background-color: -mk-green-soft;
+    -fx-border-color: -mk-green-line;
+}
+
+.key-change:capturing {
+    -fx-background-color: -mk-green-soft;
+    -fx-border-color: -mk-green;
+    -fx-text-fill: -mk-green;
+}
+
+.key-status {
+    -fx-text-fill: -mk-green;
+    -fx-font-size: 12px;
+}
+
 /* ------------------------------------------------------------------------------------------ */
 /* Summary panel                                                                              */
 /* ------------------------------------------------------------------------------------------ */

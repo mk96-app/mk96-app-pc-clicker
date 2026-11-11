@@ -9,17 +9,23 @@ import com.markes96.pcclicker.adapter.in.ui.i18n.Messages;
 import com.markes96.pcclicker.adapter.in.ui.preview.PatternThumbnail;
 import com.markes96.pcclicker.adapter.in.ui.theme.Theme;
 import com.markes96.pcclicker.adapter.in.ui.window.Page;
+import com.markes96.pcclicker.domain.configuration.ClickLimit;
 import com.markes96.pcclicker.domain.configuration.ClickRate;
 import com.markes96.pcclicker.domain.configuration.IntRange;
 import com.markes96.pcclicker.domain.configuration.MovementPattern;
 import com.markes96.pcclicker.domain.configuration.Radius;
+import com.markes96.pcclicker.domain.configuration.RateVariation;
 import com.markes96.pcclicker.domain.configuration.TimeLimit;
 import com.markes96.pcclicker.domain.configuration.VertexCount;
 import com.markes96.pcclicker.domain.control.Hotkey;
+import com.markes96.pcclicker.domain.settings.CountdownSeconds;
 import java.util.List;
 import java.util.Objects;
+import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -78,14 +84,21 @@ public final class HelpPage implements Page {
         final List<Step> steps = List.of(
                 new Step(messages.get("help.step1.title"), messages.get("help.step1.text")),
                 new Step(messages.get("help.step2.title"), messages.get("help.step2.text")),
-                new Step(messages.get("help.step3.title"),
-                        messages.format("help.step3.text", context.countdownSeconds())),
+                new Step(messages.get("help.step3.title"), null),
                 new Step(messages.get("help.step4.title"), messages.get("help.step4.text")));
         for (int i = 0; i < steps.size(); i++) {
+            final Label text = Nodes.paragraph(steps.get(i).text(), "step-text");
+            if (steps.get(i).text() == null) {
+                // The countdown is a preference: the text follows it.
+                final ObservableValue<Integer> countdown = context.preferences().countdownSeconds();
+                text.textProperty().bind(Bindings.createStringBinding(() -> countdown.getValue() == 0
+                        ? messages.get("help.step3.textImmediate")
+                        : messages.format("help.step3.text", countdown.getValue()), countdown));
+            }
             final VBox card = new VBox(8,
                     Nodes.label(String.valueOf(i + 1), "step-number"),
                     Nodes.label(steps.get(i).title(), "step-title"),
-                    Nodes.paragraph(steps.get(i).text(), "step-text"));
+                    text);
             card.getStyleClass().add("step-card");
             grid.add(card, i, 0);
         }
@@ -96,8 +109,8 @@ public final class HelpPage implements Page {
         final VBox list = new VBox(10);
         for (Hotkey hotkey : Hotkey.values()) {
             final HBox row = new HBox(12,
-                    KeyCap.of(context.keyBindings().keyFor(hotkey)),
-                    Nodes.label(messages.get("hotkey." + hotkey.name()), "help-row-text"));
+                    KeyCap.of(context.preferences().keyOf(hotkey)),
+                    Nodes.label(describer.hotkeyName(hotkey), "help-row-text"));
             row.setAlignment(Pos.CENTER_LEFT);
             list.getChildren().add(row);
         }
@@ -108,9 +121,12 @@ public final class HelpPage implements Page {
     private Node limits() {
         final VBox list = new VBox(8,
                 limit(messages.get("help.limits.clickRate"), ClickRate.RANGE),
-                limit(messages.get("help.limits.radius"), Radius.RANGE),
+                limit(messages.get("help.limits.variation"), RateVariation.RANGE),
+                limit(messages.get("help.limits.clickLimit"), ClickLimit.RANGE),
                 limit(messages.get("help.limits.vertices"), VertexCount.RANGE),
+                limit(messages.get("help.limits.radius"), Radius.RANGE),
                 limit(messages.get("help.limits.duration"), TimeLimit.MINUTES_RANGE),
+                limit(messages.get("help.limits.countdown"), CountdownSeconds.RANGE),
                 Nodes.paragraph(messages.get("help.limits.durationOff"), "help-note"));
         return list;
     }

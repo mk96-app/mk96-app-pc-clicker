@@ -12,6 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.Ikon;
@@ -76,9 +77,12 @@ public final class FeatureCard extends VBox {
     public static HBox field(String name, String hint, Node control) {
         final VBox texts = new VBox(1, Nodes.label(name, "field-name"));
         if (hint != null) {
-            texts.getChildren().add(Nodes.label(hint, "field-hint"));
+            texts.getChildren().add(Nodes.paragraph(hint, "field-hint")); // wraps instead of being cut
         }
         HBox.setHgrow(texts, Priority.ALWAYS);
+        if (control instanceof Region region) {
+            region.setMinWidth(Region.USE_PREF_SIZE); // the control keeps its size; the texts give way
+        }
         final HBox row = new HBox(12, texts, control);
         row.getStyleClass().add("field-row");
         row.setAlignment(Pos.CENTER_LEFT);

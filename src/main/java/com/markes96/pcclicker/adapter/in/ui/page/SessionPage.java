@@ -1,5 +1,6 @@
 package com.markes96.pcclicker.adapter.in.ui.page;
 
+import atlantafx.base.controls.ToggleSwitch;
 import com.markes96.pcclicker.adapter.in.ui.UiContext;
 import com.markes96.pcclicker.adapter.in.ui.component.FeatureCard;
 import com.markes96.pcclicker.adapter.in.ui.component.FeatureCard.Accent;
@@ -9,15 +10,23 @@ import com.markes96.pcclicker.adapter.in.ui.component.NumberStepper;
 import com.markes96.pcclicker.adapter.in.ui.component.PageHeader;
 import com.markes96.pcclicker.adapter.in.ui.component.PatternPicker;
 import com.markes96.pcclicker.adapter.in.ui.component.PresetChips;
+import com.markes96.pcclicker.adapter.in.ui.component.SegmentedPicker;
 import com.markes96.pcclicker.adapter.in.ui.format.DurationFormat;
 import com.markes96.pcclicker.adapter.in.ui.format.SettingsDescriber;
 import com.markes96.pcclicker.adapter.in.ui.i18n.Messages;
 import com.markes96.pcclicker.adapter.in.ui.preview.SessionPreview;
 import com.markes96.pcclicker.adapter.in.ui.theme.Icons;
 import com.markes96.pcclicker.adapter.in.ui.viewmodel.ConfigurationViewModel;
+import com.markes96.pcclicker.adapter.in.ui.viewmodel.ProfilesViewModel;
+import com.markes96.pcclicker.adapter.in.ui.window.Notifier;
+import com.markes96.pcclicker.adapter.in.ui.window.ToastLayer;
 import com.markes96.pcclicker.adapter.in.ui.window.Page;
+import com.markes96.pcclicker.domain.configuration.ClickLimit;
 import com.markes96.pcclicker.domain.configuration.ClickRate;
+import com.markes96.pcclicker.domain.configuration.ClickType;
+import com.markes96.pcclicker.domain.configuration.MouseButton;
 import com.markes96.pcclicker.domain.configuration.Radius;
+import com.markes96.pcclicker.domain.configuration.RateVariation;
 import com.markes96.pcclicker.domain.configuration.TimeLimit;
 import com.markes96.pcclicker.domain.configuration.VertexCount;
 import com.markes96.pcclicker.domain.control.Hotkey;
@@ -25,13 +34,19 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
+import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.css.PseudoClass;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -40,6 +55,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
 import org.kordamp.ikonli.Ikon;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignA;
+import org.kordamp.ikonli.materialdesign2.MaterialDesignB;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignC;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignP;
 import org.kordamp.ikonli.materialdesign2.MaterialDesignT;
@@ -53,20 +69,29 @@ public final class SessionPage implements Page {
     private static final List<Integer> CLICK_PRESETS = List.of(1, 5, 10, 25, 50, 100);
     private static final List<Integer> MINUTE_PRESETS = List.of(5, 15, 30, 60, 120);
 
+    private static final PseudoClass DANGER = PseudoClass.getPseudoClass("danger");
+    private static final javafx.util.Duration RESET_CONFIRMATION_TIME = javafx.util.Duration.seconds(3);
+
     private final ConfigurationViewModel form;
+    private final ProfilesViewModel profiles;
     private final UiContext context;
     private final Messages messages;
     private final SettingsDescriber describer;
     private final ObservableBooleanValue animate;
+    private final Notifier notifier;
     private final Runnable onStart;
 
     /**
-     * @param animate whether the preview may animate (the window is visible)
-     * @param onStart called when the user asks to start with a valid form
+     * @param animate  whether the preview may animate (the window is visible)
+     * @param notifier shows the result of saving or deleting profiles
+     * @param onStart  called when the user asks to start with a valid form
      */
-    public SessionPage(ConfigurationViewModel form, UiContext context, SettingsDescriber describer,
-                       ObservableBooleanValue animate, Runnable onStart) {
+    public SessionPage(ConfigurationViewModel form, ProfilesViewModel profiles, UiContext context,
+                       SettingsDescriber describer, ObservableBooleanValue animate, Notifier notifier,
+                       Runnable onStart) {
         this.form = Objects.requireNonNull(form, "form");
+        this.profiles = Objects.requireNonNull(profiles, "profiles");
+        this.notifier = Objects.requireNonNull(notifier, "notifier");
         this.context = Objects.requireNonNull(context, "context");
         this.messages = context.messages();
         this.describer = Objects.requireNonNull(describer, "describer");
@@ -96,11 +121,12 @@ public final class SessionPage implements Page {
     private Node configurationColumn() {
         final VBox column = new VBox(16);
         column.getStyleClass().add("page-column");
-        column.getChildren().add(PageHeader.of(
-                messages.get("config.eyebrow"), messages.get("config.title"), messages.get("config.subtitle")));
+        column.getChildren().add(headerWithReset(PageHeader.of(
+                messages.get("config.eyebrow"), messages.get("config.title"), messages.get("config.subtitle"))));
         if (!context.hotkeysAvailable()) {
             column.getChildren().add(banner(messages.get("hotkeys.unavailable")));
         }
+        column.getChildren().add(new ProfileBar(profiles, messages, notifier));
         column.getChildren().addAll(clickCard(), movementCard(), durationCard());
 
         final ScrollPane scroll = new ScrollPane(column);
@@ -111,6 +137,43 @@ public final class SessionPage implements Page {
         return scroll;
     }
 
+    /** Page title with the button that clears the whole form, asking for a second click first. */
+    private Node headerWithReset(Node header) {
+        final BooleanProperty confirming = new SimpleBooleanProperty(this, "confirmingReset");
+        final PauseTransition timeout = new PauseTransition(RESET_CONFIRMATION_TIME);
+        timeout.setOnFinished(event -> confirming.set(false));
+
+        final Button reset = new Button();
+        reset.getStyleClass().addAll("profile-button", "reset-button");
+        reset.setMinWidth(Button.USE_PREF_SIZE);
+        reset.graphicProperty().bind(Bindings.when(confirming)
+                .then(Icons.of(MaterialDesignA.ALERT_OUTLINE, 16))
+                .otherwise(Icons.of(MaterialDesignB.BROOM, 16)));
+        reset.textProperty().bind(Bindings.when(confirming)
+                .then(messages.get("reset.confirm"))
+                .otherwise(messages.get("reset.button")));
+        confirming.addListener((observable, was, now) -> reset.pseudoClassStateChanged(DANGER, now));
+        reset.setTooltip(new Tooltip(messages.get("reset.tooltip")));
+        reset.disableProperty().bind(form.pristine().and(profiles.selected().isNull()));
+        reset.setOnAction(event -> {
+            if (!confirming.get()) {
+                confirming.set(true);
+                timeout.playFromStart();
+                return;
+            }
+            timeout.stop();
+            confirming.set(false);
+            profiles.clearSelection();
+            form.reset();
+            notifier.notify(ToastLayer.Kind.INFO, messages.get("reset.done"), null);
+        });
+
+        HBox.setHgrow(header, Priority.ALWAYS);
+        final HBox row = new HBox(16, header, reset);
+        row.setAlignment(Pos.TOP_LEFT);
+        return row;
+    }
+
     private Node clickCard() {
         final NumberStepper rate = new NumberStepper(
                 ClickRate.RANGE, form.clickRate(), messages.get("unit.perSecond"), messages);
@@ -118,9 +181,31 @@ public final class SessionPage implements Page {
                 CLICK_PRESETS, form.clickRate(), value -> messages.number(value) + messages.get("unit.perSecond"));
         final VBox body = new VBox(12,
                 FeatureCard.field(messages.get("click.rate"), rangeHint(ClickRate.RANGE.min(), ClickRate.RANGE.max()), rate),
-                presets);
+                presets,
+                Nodes.styled(new Region(), "card-divider"),
+                FeatureCard.field(messages.get("click.button"), null,
+                        new SegmentedPicker<>(MouseButton.class, form.clickButton(), describer::buttonName)),
+                FeatureCard.field(messages.get("click.type"), messages.get("click.typeHint"),
+                        new SegmentedPicker<>(ClickType.class, form.clickType(), describer::clickTypeName)),
+                FeatureCard.field(messages.get("click.variation"), messages.get("click.variationHint"),
+                        new NumberStepper(RateVariation.RANGE, form.rateVariation(), messages.get("unit.percent"),
+                                messages)),
+                clickLimitField());
         return new FeatureCard(Accent.VIOLET, MaterialDesignC.CURSOR_DEFAULT_CLICK_OUTLINE,
                 messages.get("click.title"), messages.get("click.description"), form.clickEnabled(), body);
+    }
+
+    /** "Stop after N clicks": a switch, and the number once it is on. */
+    private Node clickLimitField() {
+        final ToggleSwitch toggle = new ToggleSwitch();
+        toggle.selectedProperty().bindBidirectional(form.clickLimitEnabled());
+        toggle.setAccessibleText(messages.get("click.limit"));
+        final NumberStepper clicks = new NumberStepper(
+                ClickLimit.RANGE, form.clickLimit(), messages.get("unit.clicks"), messages);
+        Nodes.showWhen(clicks, form.clickLimitEnabled());
+        final HBox control = new HBox(10, clicks, toggle);
+        control.setAlignment(Pos.CENTER_RIGHT);
+        return FeatureCard.field(messages.get("click.limit"), messages.get("click.limitHint"), control);
     }
 
     private Node movementCard() {
@@ -180,7 +265,7 @@ public final class SessionPage implements Page {
         hotkeys.getStyleClass().add("hotkey-hints");
         for (Hotkey hotkey : Hotkey.values()) {
             hotkeys.getChildren().add(KeyCap.withCaption(
-                    context.keyBindings().keyFor(hotkey), messages.get("hotkey." + hotkey.name())));
+                    context.preferences().keyOf(hotkey), describer.hotkeyName(hotkey)));
         }
 
         final Button start = new Button(messages.get("start.button"), Icons.of(MaterialDesignP.PLAY, 22));
@@ -190,9 +275,15 @@ public final class SessionPage implements Page {
         start.setOnAction(event -> onStart.run());
 
         final Label hint = Nodes.paragraph("", "start-hint");
-        hint.textProperty().bind(Bindings.when(form.canStart())
-                .then(messages.format("start.hint", context.countdownSeconds()))
-                .otherwise(messages.get("start.disabled")));
+        final ObservableValue<Integer> countdown = context.preferences().countdownSeconds();
+        hint.textProperty().bind(Bindings.createStringBinding(() -> {
+            if (!form.canStart().get()) {
+                return messages.get("start.disabled");
+            }
+            return countdown.getValue() == 0
+                    ? messages.get("start.hintImmediate")
+                    : messages.format("start.hint", countdown.getValue());
+        }, form.canStart(), countdown));
 
         final VBox panel = new VBox(16,
                 Nodes.label(messages.get("summary.title"), "panel-title"),

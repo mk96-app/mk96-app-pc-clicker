@@ -3,13 +3,19 @@ package com.markes96.pcclicker.adapter.in.ui.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.markes96.pcclicker.adapter.in.ui.i18n.Messages;
+import com.markes96.pcclicker.domain.configuration.ClickLimit;
 import com.markes96.pcclicker.domain.configuration.ClickRate;
 import com.markes96.pcclicker.domain.configuration.ClickSettings;
+import com.markes96.pcclicker.domain.configuration.ClickType;
+import com.markes96.pcclicker.domain.configuration.MouseButton;
 import com.markes96.pcclicker.domain.configuration.MovementPattern;
 import com.markes96.pcclicker.domain.configuration.MovementSettings;
 import com.markes96.pcclicker.domain.configuration.Radius;
+import com.markes96.pcclicker.domain.configuration.RateVariation;
 import com.markes96.pcclicker.domain.configuration.TimeLimit;
 import com.markes96.pcclicker.domain.configuration.VertexCount;
+import com.markes96.pcclicker.domain.control.Hotkey;
+import com.markes96.pcclicker.domain.settings.Preset;
 import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
@@ -19,8 +25,30 @@ class SettingsDescriberTest {
 
     @Test
     void describes_clicking() {
-        assertThat(describer.click(ClickSettings.enabled(new ClickRate(25)))).isEqualTo("25 clics/s");
+        assertThat(describer.click(ClickSettings.enabled(new ClickRate(25)))).isEqualTo(nbsp("25_clics/s"));
         assertThat(describer.click(ClickSettings.disabled())).isEqualTo("Desactivado");
+    }
+
+    @Test
+    void describes_only_the_click_options_that_differ_from_a_plain_steady_left_click() {
+        final ClickSettings everything = ClickSettings.enabled(new ClickRate(25))
+                .withButton(MouseButton.RIGHT)
+                .withType(ClickType.DOUBLE)
+                .withVariation(new RateVariation(20))
+                .withLimit(ClickLimit.ofClicks(1_500));
+
+        assertThat(describer.click(everything))
+                .isEqualTo(nbsp("25_clics/s · botón_derecho · doble_clic · ±20_% · hasta_1.500_clics"));
+        assertThat(describer.click(ClickSettings.enabled(new ClickRate(25)).withButton(MouseButton.MIDDLE)))
+                .isEqualTo(nbsp("25_clics/s · botón_central"));
+    }
+
+    @Test
+    void names_buttons_click_types_and_hotkeys() {
+        assertThat(describer.buttonName(MouseButton.LEFT)).isEqualTo("Izquierdo");
+        assertThat(describer.clickTypeName(ClickType.DOUBLE)).isEqualTo("Doble");
+        assertThat(describer.hotkeyName(Hotkey.START)).isEqualTo("Iniciar");
+        assertThat(describer.presetName(Preset.ANTI_AFK)).isEqualTo("Anti-AFK (círculos)");
     }
 
     @Test

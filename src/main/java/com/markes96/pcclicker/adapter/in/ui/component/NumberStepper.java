@@ -25,6 +25,7 @@ import org.kordamp.ikonli.materialdesign2.MaterialDesignP;
 public final class NumberStepper extends HBox {
 
     private static final int FAST_STEPS_PER_RANGE = 50;
+    private static final int MIN_COLUMNS = 3;
 
     private final IntRange range;
     private final IntegerProperty value;
@@ -49,6 +50,7 @@ public final class NumberStepper extends HBox {
         getChildren().addAll(decrease, field, increase);
         if (unit != null && !unit.isBlank()) {
             final Label unitLabel = Nodes.label(unit, "stepper-unit");
+            unitLabel.setMinWidth(Label.USE_PREF_SIZE);
             getChildren().add(unitLabel);
         }
     }
@@ -56,7 +58,9 @@ public final class NumberStepper extends HBox {
     private void configureField(Messages messages) {
         field.getStyleClass().add("stepper-field");
         field.setAlignment(Pos.CENTER);
-        field.setPrefColumnCount(String.valueOf(range.max()).length());
+        // Room for the largest value, and never less than three digits: bold digits are wide.
+        field.setPrefColumnCount(Math.max(MIN_COLUMNS, String.valueOf(range.max()).length()));
+        field.setMinWidth(TextField.USE_PREF_SIZE);
         field.setTextFormatter(new TextFormatter<String>(change ->
                 change.getControlNewText().matches("\\d{0,9}") ? change : null));
         field.setText(String.valueOf(value.get()));

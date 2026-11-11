@@ -1,5 +1,6 @@
 package com.markes96.pcclicker.domain.control;
 
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Set;
 public final class KeyBindings {
 
     private static final KeyBindings DEFAULTS = new KeyBindings(Map.of(
+            Hotkey.START, Key.F6,
             Hotkey.EXIT, Key.ESCAPE,
             Hotkey.STOP, Key.X,
             Hotkey.TOGGLE_PAUSE, Key.P));
@@ -37,6 +39,39 @@ public final class KeyBindings {
 
     public Key keyFor(Hotkey hotkey) {
         return keys.get(hotkey);
+    }
+
+    /**
+     * Binds {@code hotkey} to {@code key}. If another hotkey was using that key, the two swap keys,
+     * so every hotkey stays bound and no key triggers two of them.
+     */
+    public KeyBindings with(Hotkey hotkey, Key key) {
+        Objects.requireNonNull(hotkey, "hotkey");
+        Objects.requireNonNull(key, "key");
+        final Map<Hotkey, Key> updated = new EnumMap<>(keys);
+        hotkeyFor(key).ifPresent(previousOwner -> updated.put(previousOwner, keys.get(hotkey)));
+        updated.put(hotkey, key);
+        return new KeyBindings(updated);
+    }
+
+    /** Every hotkey with its key, in declaration order. */
+    public Map<Hotkey, Key> asMap() {
+        return Collections.unmodifiableMap(keys);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return this == other || other instanceof KeyBindings that && keys.equals(that.keys);
+    }
+
+    @Override
+    public int hashCode() {
+        return keys.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "KeyBindings" + keys;
     }
 
     public Optional<Hotkey> hotkeyFor(Key key) {

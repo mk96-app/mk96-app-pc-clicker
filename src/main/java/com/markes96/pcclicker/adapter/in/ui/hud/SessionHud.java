@@ -214,9 +214,17 @@ public final class SessionHud {
                 session.remaining()));
 
         final Label clicks = Nodes.label("", "hud-clicks");
-        clicks.textProperty().bind(Bindings.createStringBinding(
-                () -> messages.number(session.clicks().get()), session.clicks()));
-        final HBox clickStat = new HBox(6, clicks, Nodes.label(messages.get("hud.clicks"), "hud-caption"));
+        clicks.textProperty().bind(Bindings.createStringBinding(() -> {
+            final String done = messages.number(session.clicks().get());
+            final SessionConfiguration configuration = session.configuration().get();
+            return configuration == null || !configuration.click().limit().isLimited()
+                    ? done
+                    : done + " / " + messages.number(configuration.click().limit().clicks().getAsLong());
+        }, session.clicks(), session.configuration()));
+        clicks.setMinWidth(Label.USE_PREF_SIZE);
+        final Label clicksCaption = Nodes.label(messages.get("hud.clicks"), "hud-caption");
+        clicksCaption.setMinWidth(Label.USE_PREF_SIZE);
+        final HBox clickStat = new HBox(6, clicks, clicksCaption);
         clickStat.setAlignment(Pos.BASELINE_LEFT);
         final Label configuration = Nodes.label("", "hud-caption", "hud-config");
         configuration.textProperty().bind(Bindings.createStringBinding(
@@ -230,7 +238,8 @@ public final class SessionHud {
                 timer,
                 progress,
                 remaining,
-                new HBox(12, clickStat, Nodes.spacer(), configuration),
+                clickStat,
+                configuration,
                 Nodes.styled(new Region(), "hud-divider"),
                 hotkeyHints(Hotkey.EXIT, Hotkey.STOP, Hotkey.TOGGLE_PAUSE));
         view.getStyleClass().add("hud-view");
@@ -243,7 +252,8 @@ public final class SessionHud {
         }
         final List<String> parts = new ArrayList<>(2);
         if (configuration.clicks()) {
-            parts.add(describer.click(configuration.click()));
+            // Only the rate: the click limit is already shown next to the counter.
+            parts.add(messages.format("summary.clickRate", configuration.click().rate().clicksPerSecond()));
         }
         if (configuration.moves()) {
             parts.add(describer.patternName(configuration.movement().pattern()));
@@ -285,8 +295,7 @@ public final class SessionHud {
         hints.getStyleClass().add("hud-hints");
         hints.setAlignment(Pos.CENTER_LEFT);
         for (Hotkey hotkey : hotkeys) {
-            hints.getChildren().add(KeyCap.withCaption(
-                    context.keyBindings().keyFor(hotkey), messages.get("hotkey." + hotkey.name())));
+            hints.getChildren().add(KeyCap.withCaption(context.preferences().keyOf(hotkey), describer.hotkeyName(hotkey)));
         }
         return hints;
     }

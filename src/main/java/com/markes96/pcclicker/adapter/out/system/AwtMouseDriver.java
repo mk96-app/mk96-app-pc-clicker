@@ -1,6 +1,8 @@
 package com.markes96.pcclicker.adapter.out.system;
 
 import com.markes96.pcclicker.application.port.out.MouseDriver;
+import com.markes96.pcclicker.domain.configuration.ClickType;
+import com.markes96.pcclicker.domain.configuration.MouseButton;
 import com.markes96.pcclicker.domain.geometry.ScreenPoint;
 import java.awt.AWTException;
 import java.awt.MouseInfo;
@@ -49,9 +51,20 @@ public final class AwtMouseDriver implements MouseDriver {
     }
 
     @Override
-    public void click() {
-        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+    public void click(MouseButton button, ClickType type) {
+        final int mask = maskOf(button);
+        for (int press = 0; press < type.presses(); press++) {
+            robot.mousePress(mask);
+            robot.mouseRelease(mask);
+        }
+    }
+
+    static int maskOf(MouseButton button) {
+        return switch (button) {
+            case LEFT -> InputEvent.BUTTON1_DOWN_MASK;
+            case MIDDLE -> InputEvent.BUTTON2_DOWN_MASK;
+            case RIGHT -> InputEvent.BUTTON3_DOWN_MASK;
+        };
     }
 
     /** The operating system does not let this process control the pointer. */

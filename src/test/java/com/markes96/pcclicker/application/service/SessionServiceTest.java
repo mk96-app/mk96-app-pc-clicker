@@ -10,11 +10,15 @@ import com.markes96.pcclicker.application.port.out.event.SessionPaused;
 import com.markes96.pcclicker.application.port.out.event.SessionProgressed;
 import com.markes96.pcclicker.application.port.out.event.SessionResumed;
 import com.markes96.pcclicker.application.port.out.event.SessionStarted;
+import com.markes96.pcclicker.domain.configuration.ClickLimit;
 import com.markes96.pcclicker.domain.configuration.ClickRate;
 import com.markes96.pcclicker.domain.configuration.ClickSettings;
+import com.markes96.pcclicker.domain.configuration.ClickType;
+import com.markes96.pcclicker.domain.configuration.MouseButton;
 import com.markes96.pcclicker.domain.configuration.MovementPattern;
 import com.markes96.pcclicker.domain.configuration.MovementSettings;
 import com.markes96.pcclicker.domain.configuration.Radius;
+import com.markes96.pcclicker.domain.configuration.RateVariation;
 import com.markes96.pcclicker.domain.configuration.SessionConfiguration;
 import com.markes96.pcclicker.domain.configuration.TimeLimit;
 import com.markes96.pcclicker.domain.configuration.VertexCount;
@@ -23,6 +27,7 @@ import com.markes96.pcclicker.domain.geometry.ScreenPoint;
 import com.markes96.pcclicker.domain.movement.MovementPathFactory;
 import com.markes96.pcclicker.domain.session.FinishReason;
 import com.markes96.pcclicker.domain.session.SessionStatus;
+import com.markes96.pcclicker.domain.settings.CountdownSeconds;
 import com.markes96.pcclicker.support.FakeMouseDriver;
 import com.markes96.pcclicker.support.RecordingEventPublisher;
 import com.markes96.pcclicker.support.VirtualTimeScheduler;
@@ -38,6 +43,7 @@ class SessionServiceTest {
     private static final ScreenArea SCREEN = new ScreenArea(0, 0, 1920, 1080);
     private static final Duration COUNTDOWN = Duration.ofSeconds(3);
 
+    private CountdownSeconds countdown = CountdownSeconds.DEFAULT;
     private VirtualTimeScheduler time;
     private FakeMouseDriver mouse;
     private RecordingEventPublisher events;
@@ -55,7 +61,9 @@ class SessionServiceTest {
                 time,
                 events,
                 new MovementPathFactory(new SplittableRandom(11)),
-                SessionTimings.defaults());
+                new SplittableRandom(13),
+                SessionTimings.defaults(),
+                () -> countdown);
     }
 
     private static SessionConfiguration clicking(int perSecond, TimeLimit limit) {
@@ -150,6 +158,168 @@ class SessionServiceTest {
             time.advance(Duration.ofSeconds(1));
 
             assertThat(mouse.moves()).isEmpty();
+        }
+    }
+
+    @Nested
+    class ClickOptions {
+
+        @Test
+        void clicks_with_the_configured_button_and_type() {
+            startAndSkipCountdown(new SessionConfiguration(
+                    ClickSettings.enabled(new ClickRate(10)).withButton(MouseButton.RIGHT).withType(ClickType.DOUBLE),
+                    MovementSettings.disabled(), TimeLimit.unlimited()));
+            time.advance(Duration.ofMillis(250));
+
+            assertThat(mouse.clickLog())
+                    .hasSize(3)
+                    .containsOnly(new FakeMouseDriver.Click(MouseButton.RIGHT, ClickType.DOUBLE));
+        }
+
+        @Test
+        void a_double_click_counts_as_one_click() {
+            startAndSkipCountdown(new SessionConfiguration(
+                    ClickSettings.enabled(new ClickRate(10)).withType(ClickType.DOUBLE),
+                    MovementSettings.disabled(), TimeLimit.unlimited()));
+            time.advance(Duration.ofMillis(950));
+            service.stop();
+
+            assertThat(mouse.clicks()).isEqualTo(10);
+            assertThat(events.eventsOfType(SessionFinished.class).getLast().snapshot().clicks()).isEqualTo(10);
+        }
+
+        @Test
+        void with_variation_keeps_the_average_rate_with_a_single_pending_click() {
+            startAndSkipCountdown(new SessionConfiguration(
+                    ClickSettings.enabled(new ClickRate(10)).withVariation(new RateVariation(40)),
+                    MovementSettings.disabled(), TimeLimit.unlimited()));
+
+            for (int second = 0; second < 30; second++) {
+                time.advance(Duration.ofSeconds(1));
+                assertThat(time.activeTasks()).as("click task + progress task").isEqualTo(2);
+            }
+            assertThat(mouse.clicks()).isBetween(285, 315);
+        }
+
+        @Test
+        void with_variation_stops_clicking_while_paused_and_when_stopped() {
+            startAndSkipCountdown(new SessionConfiguration(
+                    ClickSettings.enabled(new ClickRate(20)).withVariation(new RateVariation(30)),
+                    MovementSettings.disabled(), TimeLimit.unlimited()));
+            time.advance(Duration.ofSeconds(1));
+
+            service.togglePause();
+            final int beforePause = mouse.clicks();
+            time.advance(Duration.ofSeconds(2));
+            assertThat(mouse.clicks()).isEqualTo(beforePause);
+
+            service.stop();
+            time.advance(Duration.ofSeconds(2));
+            assertThat(time.activeTasks()).isZero();
+        }
+    }
+
+    @Nested
+    class ClickLimits {
+
+        private SessionConfiguration clickingUpTo(int limit, int perSecond) {
+            return new SessionConfiguration(
+                    ClickSettings.enabled(new ClickRate(perSecond))
+                            .withLimit(ClickLimit.ofClicks(limit)),
+                    MovementSettings.disabled(), TimeLimit.unlimited());
+        }
+
+        @Test
+        void finishes_right_after_the_last_click() {
+            startAndSkipCountdown(clickingUpTo(5, 10));
+            time.advance(Duration.ofSeconds(3));
+
+            assertThat(mouse.clicks()).isEqualTo(5);
+            assertThat(service.isSessionActive()).isFalse();
+            assertThat(time.activeTasks()).isZero();
+            assertThat(events.last()).isInstanceOfSatisfying(SessionFinished.class, finished -> {
+                assertThat(finished.reason()).isEqualTo(FinishReason.CLICK_LIMIT_REACHED);
+                assertThat(finished.snapshot().clicks()).isEqualTo(5);
+                assertThat(finished.snapshot().elapsed()).isEqualTo(Duration.ofMillis(400));
+            });
+        }
+
+        @Test
+        void also_applies_with_an_irregular_pace() {
+            startAndSkipCountdown(new SessionConfiguration(
+                    ClickSettings.enabled(new ClickRate(50))
+                            .withVariation(new RateVariation(50))
+                            .withLimit(ClickLimit.ofClicks(30)),
+                    MovementSettings.disabled(), TimeLimit.unlimited()));
+            time.advance(Duration.ofSeconds(5));
+
+            assertThat(mouse.clicks()).isEqualTo(30);
+            assertThat(time.activeTasks()).isZero();
+        }
+
+        @Test
+        void the_time_limit_can_still_end_the_session_first() {
+            startAndSkipCountdown(new SessionConfiguration(
+                    ClickSettings.enabled(new ClickRate(1))
+                            .withLimit(ClickLimit.ofClicks(1_000)),
+                    MovementSettings.disabled(), TimeLimit.ofMinutes(1)));
+            time.advance(Duration.ofMinutes(2));
+
+            assertThat(events.last()).isInstanceOfSatisfying(SessionFinished.class,
+                    finished -> assertThat(finished.reason()).isEqualTo(FinishReason.TIME_LIMIT_REACHED));
+        }
+    }
+
+    @Nested
+    class ConfigurableCountdown {
+
+        @Test
+        void counts_down_the_seconds_chosen_in_the_preferences() {
+            countdown = new CountdownSeconds(5);
+
+            service.start(clicking(10, TimeLimit.unlimited()));
+            time.advance(Duration.ofSeconds(5));
+
+            assertThat(events.eventsOfType(CountdownTicked.class))
+                    .extracting(CountdownTicked::secondsLeft)
+                    .containsExactly(5, 4, 3, 2, 1);
+            assertThat(events.eventsOfType(SessionStarted.class)).hasSize(1);
+        }
+
+        @Test
+        void zero_seconds_starts_acting_immediately() {
+            countdown = new CountdownSeconds(0);
+
+            service.start(clicking(10, TimeLimit.unlimited()));
+
+            assertThat(events.eventsOfType(CountdownTicked.class)).isEmpty();
+            assertThat(events.events()).first().isInstanceOf(SessionStarted.class);
+            time.advance(Duration.ZERO);
+            assertThat(mouse.clicks()).isEqualTo(1);
+        }
+
+        @Test
+        void an_immediate_start_that_cannot_read_the_pointer_fails_the_session() {
+            countdown = new CountdownSeconds(0);
+            mouse.failWith(new IllegalStateException("No pointer"));
+
+            service.start(movingInCircles());
+
+            assertThat(service.isSessionActive()).isFalse();
+            assertThat(events.last()).isInstanceOfSatisfying(SessionFinished.class,
+                    finished -> assertThat(finished.reason()).isEqualTo(FinishReason.FAILED));
+        }
+
+        @Test
+        void a_change_applies_to_the_next_session() {
+            startAndSkipCountdown(clicking(10, TimeLimit.unlimited()));
+            service.stop();
+            events.clear();
+
+            countdown = new CountdownSeconds(1);
+            service.start(clicking(10, TimeLimit.unlimited()));
+
+            assertThat(events.events()).first().isEqualTo(new CountdownTicked(1));
         }
     }
 

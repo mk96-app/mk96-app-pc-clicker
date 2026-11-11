@@ -63,6 +63,11 @@ public final class Session {
         clicks++;
     }
 
+    /** True once the session has performed as many clicks as its limit allows. */
+    public boolean hasReachedClickLimit() {
+        return configuration.clicks() && configuration.click().limit().isReachedBy(clicks);
+    }
+
     public boolean hasReachedTimeLimit(Instant now) {
         return status == SessionStatus.RUNNING && configuration.timeLimit().isReachedBy(stopwatch.elapsed(now));
     }

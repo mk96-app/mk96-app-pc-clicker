@@ -1,6 +1,8 @@
 package com.markes96.pcclicker.support;
 
 import com.markes96.pcclicker.application.port.out.MouseDriver;
+import com.markes96.pcclicker.domain.configuration.ClickType;
+import com.markes96.pcclicker.domain.configuration.MouseButton;
 import com.markes96.pcclicker.domain.geometry.ScreenPoint;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +12,7 @@ public final class FakeMouseDriver implements MouseDriver {
 
     private final List<ScreenPoint> moves = new ArrayList<>();
     private ScreenPoint position;
-    private int clicks;
+    private final List<Click> clicks = new ArrayList<>();
     private RuntimeException failure;
 
     public FakeMouseDriver(ScreenPoint position) {
@@ -31,21 +33,30 @@ public final class FakeMouseDriver implements MouseDriver {
     }
 
     @Override
-    public void click() {
+    public void click(MouseButton button, ClickType type) {
         failIfAsked();
-        clicks++;
+        clicks.add(new Click(button, type));
     }
 
     public void failWith(RuntimeException failure) {
         this.failure = failure;
     }
 
+    /** Number of clicks requested, a double click counting as one. */
     public int clicks() {
-        return clicks;
+        return clicks.size();
+    }
+
+    public List<Click> clickLog() {
+        return List.copyOf(clicks);
     }
 
     public List<ScreenPoint> moves() {
         return List.copyOf(moves);
+    }
+
+    /** One click as the application asked for it. */
+    public record Click(MouseButton button, ClickType type) {
     }
 
     private void failIfAsked() {

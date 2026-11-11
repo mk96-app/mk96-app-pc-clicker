@@ -1,7 +1,6 @@
 package com.markes96.pcclicker.adapter.in.hotkey;
 
 import com.markes96.pcclicker.application.port.in.HandleHotkeyUseCase;
-import com.markes96.pcclicker.domain.control.KeyBindings;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lc.kra.system.keyboard.GlobalKeyboardHook;
@@ -35,7 +34,7 @@ public final class GlobalHotkeyListener implements AutoCloseable {
      *
      * @throws UnsupportedOperationException if the platform has no native hook (non-Windows)
      */
-    public static GlobalHotkeyListener install(KeyBindings bindings, HandleHotkeyUseCase useCase) {
+    public static GlobalHotkeyListener install(HandleHotkeyUseCase useCase) {
         final ExecutorService executor = Executors.newSingleThreadExecutor(runnable -> {
             final Thread thread = new Thread(runnable, "hotkey-dispatcher");
             thread.setDaemon(true);
@@ -46,7 +45,7 @@ public final class GlobalHotkeyListener implements AutoCloseable {
             // the usual key messages to this process, and the app's own text fields stop accepting
             // typing. The low-level hook only observes keys and lets them through untouched.
             final GlobalKeyboardHook hook = new GlobalKeyboardHook(false);
-            return new GlobalHotkeyListener(hook, new HotkeyDispatcher(bindings, useCase, executor), executor);
+            return new GlobalHotkeyListener(hook, new HotkeyDispatcher(useCase, executor), executor);
         } catch (RuntimeException | UnsatisfiedLinkError failure) {
             executor.shutdownNow();
             throw new UnsupportedOperationException("Global keyboard hook is not available on this system", failure);

@@ -3,11 +3,15 @@ package com.markes96.pcclicker.domain.session;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
+import com.markes96.pcclicker.domain.configuration.ClickLimit;
 import com.markes96.pcclicker.domain.configuration.ClickRate;
 import com.markes96.pcclicker.domain.configuration.ClickSettings;
+import com.markes96.pcclicker.domain.configuration.MovementPattern;
 import com.markes96.pcclicker.domain.configuration.MovementSettings;
+import com.markes96.pcclicker.domain.configuration.Radius;
 import com.markes96.pcclicker.domain.configuration.SessionConfiguration;
 import com.markes96.pcclicker.domain.configuration.TimeLimit;
+import com.markes96.pcclicker.domain.configuration.VertexCount;
 import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -147,5 +151,35 @@ class SessionTest {
 
         assertThat(snapshot.remaining()).isEmpty();
         assertThat(snapshot.progress()).isEmpty();
+        assertThat(snapshot.remainingClicks()).isEmpty();
+    }
+
+    @Test
+    void reaches_its_click_limit_once_the_clicks_are_done() {
+        final Session session = Session.prepare(new SessionConfiguration(
+                ClickSettings.enabled(new ClickRate(5)).withLimit(ClickLimit.ofClicks(3)),
+                MovementSettings.disabled(), TimeLimit.unlimited()));
+        session.start(T0);
+
+        session.recordClick();
+        session.recordClick();
+        assertThat(session.hasReachedClickLimit()).isFalse();
+        assertThat(session.snapshot(at(1)).remainingClicks()).hasValue(1);
+
+        session.recordClick();
+        assertThat(session.hasReachedClickLimit()).isTrue();
+        assertThat(session.snapshot(at(1)).remainingClicks()).hasValue(0);
+    }
+
+    @Test
+    void a_session_that_does_not_click_has_no_click_limit() {
+        final Session session = Session.prepare(new SessionConfiguration(
+                ClickSettings.disabled().withLimit(ClickLimit.ofClicks(3)),
+                MovementSettings.enabled(MovementPattern.CIRCLE, Radius.DEFAULT, VertexCount.DEFAULT),
+                TimeLimit.unlimited()));
+        session.start(T0);
+
+        assertThat(session.hasReachedClickLimit()).isFalse();
+        assertThat(session.snapshot(at(1)).remainingClicks()).isEmpty();
     }
 }
